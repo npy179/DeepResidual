@@ -1,0 +1,57 @@
+require 'nn'
+require 'image'
+
+image = image.load("image.jpg", 3, "double")
+image = image:reshape(1, 3, 400, 400)
+print(image:size())
+
+inception = nn.Concat(2)
+conv1 = nn.Sequential()
+conv1:add(nn.SpatialConvolution(192, 64, 1, 1, 1, 1, 0, 0))
+conv1:add(nn.ReLU(true))
+
+conv3 = nn.Sequential()
+conv3:add(nn.SpatialConvolution(192, 64, 1, 1, 1, 1, 0, 0))
+conv3:add(nn.SpatialConvolution(64, 64, 3, 3, 1, 1, 1, 1))
+conv3:add(nn.ReLU(true))
+
+conv5 = nn.Sequential()
+conv5:add(nn.SpatialMaxPooling(3, 3, 1, 1, 1, 1))
+conv5:add(nn.SpatialConvolution(192, 64, 1, 1, 1, 1, 0, 0))
+conv5:add(nn.ReLU(true))
+
+inception:add(conv1)
+inception:add(conv3)
+inception:add(conv5)
+
+
+model = nn:Sequential()
+model:add(nn.SpatialConvolution(3, 64, 7, 7, 2, 2, 3, 3))
+model:add(nn.ReLU(true))
+model:add(nn.SpatialMaxPooling(3, 3, 2, 2, 1, 1))
+model:add(nn.SpatialCrossMapLRN(11, 0.0001, 0.75))
+model:add(nn.SpatialConvolution(64, 64, 1, 1, 1, 1, 0, 0))
+model:add(nn.SpatialConvolution(64, 192, 3, 3, 1, 1, 1, 1))
+model:add(nn.SpatialCrossMapLRN(11, 0.0001, 0.75))
+model:add(nn.SpatialMaxPooling(3, 3, 2, 2, 1, 1))
+model:add(nn.ReLU(true))
+model:add(inception)
+model:add(inception)
+model:add(nn.SpatialMaxPooling(3, 3, 2, 2, 1, 1))
+model:add(inception)
+model:add(inception)
+model:add(inception)
+model:add(inception)
+model:add(inception)
+model:add(nn.SpatialMaxPooling(3, 3, 2, 2, 1, 1))
+model:add(inception)
+model:add(inception)
+model:add(nn.SpatialAveragePooling(7, 7, 1, 1, 3, 3))
+model:add(nn.View(192*13*13):setNumInputDims(3))
+model:add(nn.Linear(192*13*13, 1000))
+model:add(nn.ReLU(true))
+model:add(nn.SoftMax())
+
+local outp = model:forward(image)
+print(outp:size())
+print(model)
