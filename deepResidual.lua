@@ -13,11 +13,11 @@ local function basicblock(nInpputPlane, nOutputPlane)
    n:add(nn.SpatialBatchNormalization(nOutputPlane))
    n:add(nn.ReLU(true))
    n:add(nn.SpatialConvolution(nOutputPlane, nOutputPlane, 3, 3, 1, 1, 1, 1))
-   n:add(nn.SpatialBatchNormalization(64))
+   n:add(nn.SpatialBatchNormalization(nOutputPlane))
 
    shortcut = nn:Sequential()
    shortcut:add(nn.SpatialConvolution(nInpputPlane, nOutputPlane, 1, 1, 1, 1))
-   shortcut:add(nn.SpatialBatchNormalization(64))
+   shortcut:add(nn.SpatialBatchNormalization(nOutputPlane))
 
    b = nn:Sequential()
    b:add(nn.ConcatTable()
@@ -30,22 +30,28 @@ local function basicblock(nInpputPlane, nOutputPlane)
    return b
 end
 
-local b = basicblock()
 model = nn:Sequential()
 model:add(nn.SpatialConvolution(3, 64, 7, 7, 2, 2, 3, 3))-- pad 3 keepp the image 400*400
 model:add(nn.SpatialBatchNormalization(64))
 model:add(nn.ReLU(true))
 model:add(nn.SpatialMaxPooling(3, 3, 2, 2, 1, 1)) -- 1*64*100*100
-model:add(basicblock())
-model:add(basicblock())
-model:add(basicblock())
-model:add(basicblock())
-model:add(basicblock())
-model:add(basicblock())
+model:add(basicblock(64,64))
+model:add(basicblock(64,64))
+model:add(basicblock(64,64))
+model:add(basicblock(64,128))
+model:add(basicblock(128,128))
+model:add(basicblock(128,128))
+model:add(basicblock(128,128))
+model:add(basicblock(128,256))
+model:add(basicblock(256,256))
+model:add(basicblock(256,256))
 
+print(model)
+timer = torch.Timer()
 local outp = model:forward(image)
 print(outp:size())
-
+print("time elapsed: "..timer:time().real.." seconds")
+print(collectgarbage("count"))
 --[[
 i = nn:Sequential()
 c = nn:ConcatTable()
